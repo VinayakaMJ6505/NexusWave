@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Create Listing - RentAssured{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Authentication Check -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for token in URL first, then localStorage
+            let token = new URLSearchParams(window.location.search).get('token');
+            if (!token) {
+                token = localStorage.getItem('access_token');
+            }
+            
+            if (!token) {
+                alert('Authentication required. Please login first.');
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Store token in localStorage if it came from URL
+            if (new URLSearchParams(window.location.search).get('token')) {
+                localStorage.setItem('access_token', token);
+            }
+        });
+    </script>
+    
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-2">Create New Listing</h1>
+            <p class="text-muted">List your item and start earning money by renting it out to others.</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form id="createListingForm" method="POST">
+                        <div class="mb-4">
+                            <label for="title" class="form-label">Listing Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required 
+                                   maxlength="100" placeholder="e.g., Professional Camera for Photography"
+                                   oninput="updateCharCount('title', 100)">
+                            <div class="form-text">
+                                <span id="title-count">0</span>/100 characters
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required 
+                                      maxlength="1000" placeholder="Describe your item in detail. Include condition, features, and any special instructions."
+                                      oninput="updateCharCount('description', 1000)"></textarea>
+                            <div class="form-text">
+                                <span id="description-count">0</span>/1000 characters
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="price" class="form-label">Price per Day (₹) *</label>
+                                    <input type="number" class="form-control" id="price" name="price" required 
+                                           min="1" max="1000000" step="0.01" placeholder="500"
+                                           oninput="validatePrice(this)">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="location" class="form-label">Location *</label>
+                                    <input type="text" class="form-control" id="location" name="location" required 
+                                           placeholder="e.g., Mumbai, Maharashtra">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="category" class="form-label">Category *</label>
+                                    <select class="form-select" id="category" name="category_id" required>
+                                        <option value="">Select a category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="availability" class="form-label">Availability</label>
+                                    <select class="form-select" id="availability" name="availability">
+                                        <option value="flexible">Flexible - Available most days</option>
+                                        <option value="weekends">Weekends only</option>
+                                        <option value="weekdays">Weekdays only</option>
+                                        <option value="specific">Specific dates only</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="images" class="form-label">Images</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                            <div class="form-text">Upload up to 5 images (JPG, PNG, max 5MB each)</div>
+                        </div>
+                        
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Create Listing
+                            </button>
+                            <a href="{{ url_for('dashboard') }}?token={{ request.args.get('token') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Character counter function
+function updateCharCount(fieldId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(fieldId + '-count');
+    const currentLength = field.value.length;
+    
+    counter.textContent = currentLength;
+    
+    if (currentLength > maxLength * 0.9) {
+        counter.style.color = '#dc3545'; // Red
+    } else if (currentLength > maxLength * 0.8) {
+        counter.style.color = '#ffc107'; // Yellow
+    } else {
+        counter.style.color = '#6c757d'; // Gray
+    }
+}
+
+// Real-time price validation
+function validatePrice(input) {
+    const value = parseFloat(input.value);
+    if (value < 0) {
+        input.value = '';
+        showError('price', 'Price cannot be negative');
+    } else if (value > 1000000) {
+        input.value = 1000000;
+        showError('price', 'Price cannot exceed ₹10,00,000');
+    } else if (value > 0 && value < 1) {
+        input.value = 1;
+        showError('price', 'Price must be at least ₹1');
+    } else {
+        // Clear any existing error
+        const errorElement = document.querySelector('#price + .error-message');
+        if (errorElement) {
+            errorElement.remove();
+        }
+        input.classList.remove('is-invalid');
+    }
+}
+
+document.getElementById('createListingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Frontend validation
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const price = parseFloat(document.getElementById('price').value);
+    const location = document.getElementById('location').value.trim();
+    const category = document.getElementById('category').value;
+    
+    // Clear previous error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    
+    let hasErrors = false;
+    
+    // Validate title
+    if (!title || title.length < 3) {
+        showError('title', 'Title must be at least 3 characters long');
+        hasErrors = true;
+    } else if (title.length > 100) {
+        showError('title', 'Title cannot exceed 100 characters');
+        hasErrors = true;
+    }
+    
+    // Validate description
+    if (!description || description.length < 10) {
+        showError('description', 'Description must be at least 10 characters long');
+        hasErrors = true;
+    } else if (description.length > 1000) {
+        showError('description', 'Description cannot exceed 1000 characters');
+        hasErrors = true;
+    }
+    
+    // Validate price
+    if (isNaN(price) || price <= 0) {
+        showError('price', 'Price must be greater than 0');
+        hasErrors = true;
+    } else if (price < 1) {
+        showError('price', 'Price must be at least ₹1');
+        hasErrors = true;
+    } else if (price > 1000000) {
+        showError('price', 'Price cannot exceed ₹10,00,000');
+        hasErrors = true;
+    } else if (!Number.isInteger(price * 100)) {
+        showError('price', 'Price can only have up to 2 decimal places');
+        hasErrors = true;
+    }
+    
+    // Validate location
+    if (!location || location.length < 3) {
+        showError('location', 'Location must be at least 3 characters long');
+        hasErrors = true;
+    } else if (location.length > 100) {
+        showError('location', 'Location cannot exceed 100 characters');
+        hasErrors = true;
+    }
+    
+    // Validate category
+    if (!category) {
+        showError('category', 'Please select a category');
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        return;
+    }
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Check if user is logged in
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('Please login to create a listing');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Handle file uploads (simplified for now)
+    data.images = [];
+    
+    try {
+        const response = await fetch('/create_listing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Listing created successfully!');
+            window.location.href = '/dashboard?token=' + token;
+        } else {
+            alert(result.error || 'Failed to create listing');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+});
+
+// Function to show error messages
+function showError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message text-danger small mt-1';
+    errorDiv.textContent = message;
+    field.parentNode.appendChild(errorDiv);
+    field.classList.add('is-invalid');
+}
+
+// Check authentication on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('Please login to create a listing');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Add fade-in animation
+    const card = document.querySelector('.card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        card.style.transition = 'all 0.6s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}RentAssured - Peer-to-Peer Rental Marketplace{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="hero-title">Rent Anything, Anytime</h1>
+                <p class="hero-subtitle">Discover amazing products and services in your area. Rent from trusted community members or list your own items to earn money.</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('listings') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-search me-2"></i>Browse Listings
+                    </a>
+                    <a href="{{ url_for('create_listing') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>List Your Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Ads Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title">Popular Ads</h2>
+        <div class="popular-ads-grid">
+            {% for listing in listings[:4] %}
+            <div class="card listing-card">
+                <div class="position-relative">
+                    <img src="{{ listing.images|get_first_image }}" 
+                         class="card-img-top listing-image" 
+                         alt="{{ listing.title }}">
+                    <button class="like-btn" onclick="toggleLike({{ listing.id }})">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title listing-title">{{ listing.title }}</h5>
+                    <p class="listing-location">{{ listing.location }}</p>
+                    <p class="listing-price">₹{{ listing.price }}/Day</p>
+                    <p class="listing-description">{{ listing.description[:100] }}{% if listing.description|length > 100 %}...{% endif %}</p>
+                    <div class="action-buttons">
+                        <a href="{{ url_for('listing_detail', listing_id=listing.id) }}" class="btn btn-primary">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+                        <a href="{{ url_for('listing_detail', listing_id=listing.id) }}" class="btn btn-success">
+                            <i class="fas fa-shopping-cart me-1"></i>Rent Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Rental Products Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="section-title">Rental Products</h2>
+        <div class="rental-products-grid">
+            {% for listing in listings[4:8] %}
+            <div class="card listing-card">
+                <div class="position-relative">
+                    <img src="{{ listing.images|get_first_image }}" 
+                         class="card-img-top listing-image" 
+                         alt="{{ listing.title }}">
+                    <button class="like-btn" onclick="toggleLike({{ listing.id }})">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title listing-title">{{ listing.title }}</h5>
+                    <p class="listing-location">{{ listing.location }}</p>
+                    <p class="listing-price">₹{{ listing.price }}/Day</p>
+                    <div class="action-buttons">
+                        <a href="{{ url_for('listing_detail', listing_id=listing.id) }}" class="btn btn-primary">
+                            <i class="fas fa-eye me-1"></i>View
+                        </a>
+                        <a href="{{ url_for('listing_detail', listing_id=listing.id) }}" class="btn btn-success">
+                            <i class="fas fa-shopping-cart me-1"></i>Rent
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-shield-alt fa-lg"></i>
+                    </div>
+                    <h5 class="fw-bold">Secure & Safe</h5>
+                    <p class="text-muted">All transactions are protected with our secure payment system and user verification process.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="text-center">
+                    <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-clock fa-lg"></i>
+                    </div>
+                    <h5 class="fw-bold">24/7 Support</h5>
+                    <p class="text-muted">Our dedicated support team is available around the clock to help you with any questions or issues.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="text-center">
+                    <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-star fa-lg"></i>
+                    </div>
+                    <h5 class="fw-bold">Trusted Reviews</h5>
+                    <p class="text-muted">Read genuine reviews from other users to make informed decisions about your rentals.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-3">Ready to Start Renting?</h2>
+        <p class="mb-4">Join thousands of users who are already earning and saving with RentAssured.</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Sign Up Now
+            </a>
+            <a href="{{ url_for('listings') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-search me-2"></i>Browse Listings
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleLike(listingId) {
+    // Check if user is logged in
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('Please login to like listings');
+        return;
+    }
+    
+    // Toggle like functionality (placeholder)
+    const likeBtn = event.target.closest('.like-btn');
+    const icon = likeBtn.querySelector('i');
+    
+    if (icon.classList.contains('far')) {
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+        likeBtn.classList.add('liked');
+    } else {
+        icon.classList.remove('fas');
+        icon.classList.add('far');
+        likeBtn.classList.remove('liked');
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Add fade-in animation to cards
+    const cards = document.querySelectorAll('.listing-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

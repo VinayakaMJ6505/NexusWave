@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - RentAssured{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="h4 mb-2">Create Account</h2>
+                        <p class="text-muted">Join RentAssured and start earning from your unused items</p>
+                    </div>
+                    
+                    <form id="registerForm" method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" required 
+                                           placeholder="Enter your full name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" required 
+                                           placeholder="Enter your email">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required 
+                                           placeholder="Enter your phone number">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user_type" class="form-label">Account Type</label>
+                                    <select class="form-select" id="user_type" name="user_type" required>
+                                        <option value="renter">Renter - I want to rent items</option>
+                                        <option value="owner">Owner - I want to list my items</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required 
+                                   minlength="6" placeholder="Create a strong password">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required 
+                                   placeholder="Confirm your password">
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                        
+                        <div class="text-center">
+                            <p class="text-muted">Already have an account? <a href="{{ url_for('login') }}" class="text-primary">Sign In</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Frontend validation
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const terms = document.getElementById('terms').checked;
+    
+    // Clear previous error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    
+    let hasErrors = false;
+    
+    // Validate name
+    if (!name || name.length < 2) {
+        showRegisterError('name', 'Name must be at least 2 characters long');
+        hasErrors = true;
+    }
+    
+    // Validate email
+    if (!email || !email.includes('@')) {
+        showRegisterError('email', 'Please enter a valid email address');
+        hasErrors = true;
+    }
+    
+    // Validate phone
+    if (!phone || phone.length < 10) {
+        showRegisterError('phone', 'Please enter a valid phone number');
+        hasErrors = true;
+    }
+    
+    // Validate password
+    if (!password || password.length < 6) {
+        showRegisterError('password', 'Password must be at least 6 characters long');
+        hasErrors = true;
+    }
+    
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+        showRegisterError('confirm_password', 'Passwords do not match');
+        hasErrors = true;
+    }
+    
+    // Validate terms
+    if (!terms) {
+        showRegisterError('terms', 'You must agree to the terms and conditions');
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        return;
+    }
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Registration successful! Please login.');
+            window.location.href = '/login';
+        } else {
+            alert(result.error || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+});
+
+// Function to show error messages for registration form
+function showRegisterError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message text-danger small mt-1';
+    errorDiv.textContent = message;
+    field.parentNode.appendChild(errorDiv);
+    field.classList.add('is-invalid');
+}
+
+// Add fade-in animation
+document.addEventListener('DOMContentLoaded', function() {
+    const card = document.querySelector('.card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        card.style.transition = 'all 0.6s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - RentAssured{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">Welcome back, {{ user.name }}!</h1>
+                    <p class="text-muted">Manage your listings and bookings from your dashboard.</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('create_listing') }}?token={{ request.args.get('token') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create New Listing
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ active_listings|length }}</h4>
+                            <p class="mb-0">Active Listings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-th-large fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ bookings|length }}</h4>
+                            <p class="mb-0">Total Bookings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">₹{{ (bookings|sum(attribute='total_amount'))|int }}</h4>
+                            <p class="mb-0">Total Earnings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-rupee-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">4.8</h4>
+                            <p class="mb-0">Average Rating</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-star fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- My Listings -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Listings</h5>
+                    <a href="{{ url_for('create_listing') }}?token={{ request.args.get('token') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add New
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if listings %}
+                        <div class="row">
+                            {% for listing in listings %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card listing-card">
+                                    <div class="position-relative">
+                                        <img src="{{ listing.images|get_first_image }}" 
+                                             class="card-img-top listing-image" 
+                                             alt="{{ listing.title }}">
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <span class="badge bg-{{ 'success' if listing.status == 'active' else 'secondary' }}">
+                                                {{ listing.status|title }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ listing.title }}</h6>
+                                        <p class="text-muted small mb-2">{{ listing.location }}</p>
+                                        <p class="text-primary fw-bold mb-2">₹{{ listing.price }}/Day</p>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <a href="{{ url_for('listing_detail', listing_id=listing.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="editListing({{ listing.id }})">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </button>
+                                            {% if listing.status == 'active' %}
+                                                <button class="btn btn-sm btn-outline-warning" onclick="deactivateListing({{ listing.id }})">
+                                                    <i class="fas fa-pause me-1"></i>Deactivate
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-outline-success" onclick="reactivateListing({{ listing.id }})">
+                                                    <i class="fas fa-play me-1"></i>Reactivate
+                                                </button>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteListing({{ listing.id }})">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-th-large fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No listings yet</h5>
+                            <p class="text-muted">Start by creating your first listing to begin earning!</p>
+                            <a href="{{ url_for('create_listing') }}?token={{ request.args.get('token') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create Your First Listing
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                        {% for booking in bookings[:5] %}
+                        <div class="d-flex align-items-center mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-calendar text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ booking.listing.title }}</h6>
+                                <p class="text-muted small mb-1">
+                                    {{ booking.start_date.strftime('%b %d') }} - {{ booking.end_date.strftime('%b %d, %Y') }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-primary fw-bold">₹{{ booking.total_amount }}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' if booking.status == 'pending' else 'danger' if booking.status == 'cancelled' else 'secondary' }}">
+                                            {{ booking.status|title }}
+                                        </span>
+                                        {% if booking.status in ['pending', 'confirmed'] %}
+                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelBooking({{ booking.id }})" title="Cancel Booking">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if bookings|length > 5 %}
+                        <div class="text-center">
+                            <a href="#" class="btn btn-sm btn-outline-primary">View All Bookings</a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar fa-2x text-muted mb-2"></i>
+                            <p class="text-muted small mb-0">No bookings yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('create_listing') }}?token={{ request.args.get('token') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Listing
+                        </a>
+                        <a href="{{ url_for('listings') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-2"></i>Browse Listings
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary" onclick="showProfileSettings()">
+                            <i class="fas fa-user-cog me-2"></i>Profile Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Check authentication on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('Please login to access dashboard');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Add fade-in animation to cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+function editListing(listingId) {
+    // Placeholder for edit functionality
+    alert('Edit functionality coming soon!');
+}
+
+function showProfileSettings() {
+    // Placeholder for profile settings
+    alert('Profile settings coming soon!');
+}
+
+// Cancellation functions
+async function cancelBooking(bookingId) {
+    const reason = prompt('Please provide a reason for cancellation:');
+    if (!reason) return;
+    
+    try {
+        const token = new URLSearchParams(window.location.search).get('token');
+        const response = await fetch(`/cancel_booking/${bookingId}?token=${token}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ reason: reason })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert(`Booking cancelled successfully!\nRefund Amount: ₹${result.refund_amount}\nPenalty: ₹${result.penalty_amount}`);
+            location.reload(); // Refresh to show updated status
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error cancelling booking:', error);
+        alert('An error occurred while cancelling the booking.');
+    }
+}
+
+async function deactivateListing(listingId) {
+    if (!confirm('Are you sure you want to deactivate this listing? It will no longer be visible to users.')) {
+        return;
+    }
+    
+    try {
+        const token = new URLSearchParams(window.location.search).get('token');
+        const response = await fetch(`/deactivate_listing/${listingId}?token=${token}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Listing deactivated successfully!');
+            location.reload();
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error deactivating listing:', error);
+        alert('An error occurred while deactivating the listing.');
+    }
+}
+
+async function reactivateListing(listingId) {
+    if (!confirm('Are you sure you want to reactivate this listing?')) {
+        return;
+    }
+    
+    try {
+        const token = new URLSearchParams(window.location.search).get('token');
+        const response = await fetch(`/reactivate_listing/${listingId}?token=${token}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Listing reactivated successfully!');
+            location.reload();
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error reactivating listing:', error);
+        alert('An error occurred while reactivating the listing.');
+    }
+}
+
+async function deleteListing(listingId) {
+    if (!confirm('Are you sure you want to delete this listing? This action cannot be undone and will only work if there are no bookings for this listing.')) {
+        return;
+    }
+    
+    try {
+        const token = new URLSearchParams(window.location.search).get('token');
+        const response = await fetch(`/delete_listing/${listingId}?token=${token}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Listing deleted successfully!');
+            location.reload();
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error deleting listing:', error);
+        alert('An error occurred while deleting the listing.');
+    }
+}
+
+// Real-time updates (placeholder)
+function updateDashboard() {
+    // This would fetch updated data from the server
+    console.log('Updating dashboard data...');
+}
+
+// Update dashboard every 30 seconds
+setInterval(updateDashboard, 30000);
+</script>
+{% endblock %}
