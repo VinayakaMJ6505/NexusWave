@@ -15,7 +15,7 @@ def create_database():
         connection = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='Gagan@2114'  # Change this to your MySQL password
+            password='password'  # Replace with your MySQL password
         )
         
         cursor = connection.cursor()
@@ -211,3 +211,4 @@ if __name__ == "__main__":
     print("1. Update the database password in app.py if different")
     print("2. Run: python app.py")
     print("3. Open: http://localhost:5000")
+
