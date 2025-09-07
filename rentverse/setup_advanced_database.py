@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Gagan@2114',
+    'password': 'password', # replace with your password
     'charset': 'utf8mb4',
     'collation': 'utf8mb4_unicode_ci'
 }
@@ -514,3 +514,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
